@@ -1,14 +1,19 @@
 import Data.List.Split
 import Data.Text.Encoding.Error (ignore)
-type Mono = (Int, [(Char, Int)])
+--type Mono = (Int, [(Char, Int)])
+data Mono = Mono { 
+    coef :: Integer,
+    vars :: [(Char, Int)]
+} deriving (Eq,Ord, Show)
 type Poly = [Mono]
 
 
 --------------------------parsing-------------------------------
-
+{-
 parseString :: String -> [[String]] {-, [(Char, Int)])]-}
 parseString [] = []{-("", [])-}
 parseString s = splitCoefficient (splitOneOf "+" (removeSpace (addPlus s)))
+
 
 addPlus :: String -> String
 addPlus [] = ""
@@ -33,7 +38,7 @@ multCoefficient (x:xs)
   | '^' : x = ignore
   |otherwise head = x * multCoefficient xs
 -}
-
+-}
 --------------------------------------------------------------------
 
 ----------------------------Normalise poly--------------------------
@@ -41,7 +46,8 @@ multCoefficient (x:xs)
 add1Poly :: Poly -> Poly
 add1Poly [] = []
 add1Poly [x] = [x]
-add1Poly (Mono x1 [(y1, z1)]) (Mono x2 [(y2, z2)]) | (y1 == y2) && (z1 == z2) = (Mono (x1 + x2) [(y1,z1)])
+add1Poly (x:xs) = [Mono newCoef (vars x)] ++ add1Poly [y | y <- (x:xs), (vars x /= vars y)]
+  where newCoef = sum [coef y | y <- (x:xs), (vars x == vars y)]
 
 --------------------------------------------------------------------
 
@@ -49,8 +55,8 @@ add1Poly (Mono x1 [(y1, z1)]) (Mono x2 [(y2, z2)]) | (y1 == y2) && (z1 == z2) = 
 
 mergePoly :: Poly -> Poly -> Poly
 mergePoly [] [] = []
-mergePoly [] x = []
-mergePoly x [] = []
+mergePoly [] x = x
+mergePoly x [] = x
 mergePoly (x:xs) (y:ys) = x : y : mergePoly xs ys
 
 addPolys :: Poly -> Poly -> Poly
@@ -65,14 +71,22 @@ addPolys a b = add1Poly (mergePoly a b)
 multPoly :: Poly -> Poly -> Poly
 multPoly []      qs      = []
 multPoly ps      []      = []
-multPoly (x:xs) (y:ys) = (Mono x1 [(y1, z1)]) (Mono x2 [(y2, z2)]) if y1 == y2 then (Mono (x1 * x2) [(y1, z1+z2)]) else (Mono (x1*x2) [(y1, z2), (y2, z2)])
+multPoly (x:xs) (y:ys) 
+  | fst (vars x !! 0) == fst (vars y !! 0) = 
+    [Mono (coef x * coef y) [(fst (vars x !! 0), snd (vars x !! 0) + snd (vars y !! 0))]] ++ multPoly xs ys
+  |otherwise = [Mono (coef x * coef y) ((vars x) ++ (vars y))] ++ multPoly xs ys
 
-
+-- vars x -> [(Char, Int)] 
 ---------------------------------Some values-----------------------------
-a = Mono 3 [('x', 3)]
+a = Mono (-3) [('x', 3)]
 b = Mono 6 [('y', 2)]
 c = Mono 2 [('z', 5)]
-d = Mono 9 [('x', 5)]
+d = Mono 9 [('x', 3)]
+n = Mono 5 [('y', 2)]
 
-f = Poly [a]
-h = Poly [d]
+f = [a]
+h = [a, d]
+k = [b, n]
+l = [d]
+o = [b]
+v = vars a !! 0
