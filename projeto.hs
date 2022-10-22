@@ -6,7 +6,7 @@ import Data.List (find)
 import Data.Text.Encoding.Error (ignore)
 --type Mono = (Int, [(Char, Int)])
 data Mono = Mono { 
-    coef :: Integer,
+    coef :: Int,
     vars :: [(Char, Int)]
 } deriving (Eq,Ord, Show)
 type Poly = [Mono]
@@ -67,12 +67,13 @@ sortMono :: Ord a => [(a, b)] -> [(a, b)]
 sortMono = sortBy (compare `on` fst)
 
 sortPoly :: Poly -> Poly
+sortPoly [] = []
 sortPoly (x:xs) = a ++ sortPoly xs
   where a = [Mono (coef x) (sortMono(vars x))]
 
 normalise :: Poly -> Poly
 normalise [] = []
-normalise a = add1Poly (rmvExpZero (rmvZero a))
+normalise a = add1Poly (rmvExpZero (rmvZero (sortPoly a)))
 
 --------------------------------------------------------------------
 
@@ -127,8 +128,8 @@ derivatePoly :: Poly -> Char -> Poly
 derivatePoly [] a = []
 derivatePoly a _ = a
 derivatePoly (x:xs) b 
-  |(findVar (vars x) b) && ((findExp (vars x) b) > 1) = 
-  |(findVar (vars x) b) && ((findExp (vars x) b) == 1) = 
+  |(findVar (vars x) b) && ((findExp (vars x) b) > 1) = [Mono ((coef x) * ((findExp (vars x) b) - 1)) (vars x)] ++ derivatePoly xs b
+--  |(findVar (vars x) b) && ((findExp (vars x) b) == 1) = 
   
 ---------------------------------Some values-----------------------------
 
