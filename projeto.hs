@@ -2,6 +2,7 @@ import Data.List.Split
 import Data.List (sortBy)
 import Data.Ord
 import Data.Function (on)
+import Data.List (find)
 import Data.Text.Encoding.Error (ignore)
 --type Mono = (Int, [(Char, Int)])
 data Mono = Mono { 
@@ -109,8 +110,26 @@ multPoly a b = normalise (multPolyAux a b)
 ----------------------------------Derivation--------------------------------
 
 
+findVar :: [(Char, Int)] -> Char -> Bool
+findVar [] a = False
+findVar a ' ' = False
+findVar (x:xs) b
+  |fst x == b = True
+  |otherwise = findVar xs b
+
+findExp :: [(Char, Int)] -> Char -> Int
+findExp (x:xs) b
+  |fst x == b = snd x
+  |otherwise = findExp xs b
 
 
+derivatePoly :: Poly -> Char -> Poly
+derivatePoly [] a = []
+derivatePoly a _ = a
+derivatePoly (x:xs) b 
+  |(findVar (vars x) b) && ((findExp (vars x) b) > 1) = 
+  |(findVar (vars x) b) && ((findExp (vars x) b) == 1) = 
+  
 ---------------------------------Some values-----------------------------
 
 a = Mono (-3) [('x', 3), ('z', 2)]
@@ -127,6 +146,7 @@ h = [a, d]
 k = [b, n]
 l = [d]
 o = [b]
+j = [n]
 i = [c, a, t]
 wzero = [a, c, zero, n]
 wExpZero = [a, d, expZero, zero, n]
