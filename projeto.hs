@@ -1,4 +1,7 @@
 import Data.List.Split
+import Data.List (sortBy)
+import Data.Ord
+import Data.Function (on)
 import Data.Text.Encoding.Error (ignore)
 --type Mono = (Int, [(Char, Int)])
 data Mono = Mono { 
@@ -49,6 +52,27 @@ add1Poly [x] = [x]
 add1Poly (x:xs) = [Mono newCoef (vars x)] ++ add1Poly [y | y <- (x:xs), (vars x /= vars y)]
   where newCoef = sum [coef y | y <- (x:xs), (vars x == vars y)]
 
+rmvExpZero :: Poly -> Poly
+rmvExpZero [] = []
+rmvExpZero (x:xs) | snd (vars x !! 0) == 0 = Mono 1 [(' ', 1)] : rmvExpZero xs
+                  |otherwise = x : rmvExpZero xs
+
+rmvZero :: Poly -> Poly
+rmvZero [] = []
+rmvZero (x:xs) | coef x == 0 = rmvZero xs
+               | otherwise = x : rmvZero xs
+
+sortMono :: Ord a => [(a, b)] -> [(a, b)]
+sortMono = sortBy (compare `on` fst)
+
+sortPoly :: Poly -> Poly
+sortPoly (x:xs) = a ++ sortPoly xs
+  where a = [Mono (coef x) (sortMono(vars x))]
+
+normalise :: Poly -> Poly
+normalise [] = []
+normalise a = add1Poly (rmvExpZero (rmvZero a))
+
 --------------------------------------------------------------------
 
 -----------------------------Sum Polys---------------------------------
@@ -63,30 +87,47 @@ addPolys :: Poly -> Poly -> Poly
 addPolys [] [] = []
 addPolys [] a = a
 addPolys a [] = a
-addPolys a b = add1Poly (mergePoly a b)
+addPolys a b = normalise (mergePoly a b)
 
 ----------------------------Mult Polys-----------------------------
 
+multPolyAux :: Poly -> Poly -> Poly
+multPolyAux []      qs      = []
+multPolyAux ps      []      = []
+multPolyAux (x:xs) qs = [multMono x y | y <- qs] ++ multPolyAux xs qs
+
+
+multMono :: Mono -> Mono -> Mono
+multMono a b 
+  |fst (vars a !! 0) == fst (vars b !! 0) = Mono (coef a * coef b) [(fst (vars a !! 0), snd (vars a !! 0) + snd (vars b !! 0))]
+  |otherwise = Mono (coef a * coef b) ((vars a) ++ (vars b))
 
 multPoly :: Poly -> Poly -> Poly
-multPoly []      qs      = []
-multPoly ps      []      = []
-multPoly (x:xs) (y:ys) 
-  | fst (vars x !! 0) == fst (vars y !! 0) = 
-    [Mono (coef x * coef y) [(fst (vars x !! 0), snd (vars x !! 0) + snd (vars y !! 0))]] ++ multPoly xs ys
-  |otherwise = [Mono (coef x * coef y) ((vars x) ++ (vars y))] ++ multPoly xs ys
+multPoly a b = normalise (multPolyAux a b)
 
--- vars x -> [(Char, Int)] 
+
+----------------------------------Derivation--------------------------------
+
+
+
+
 ---------------------------------Some values-----------------------------
-a = Mono (-3) [('x', 3)]
+
+a = Mono (-3) [('x', 3), ('z', 2)]
 b = Mono 6 [('y', 2)]
-c = Mono 2 [('z', 5)]
+c = Mono 2 [('z', 5), ('x', 2)]
 d = Mono 9 [('x', 3)]
 n = Mono 5 [('y', 2)]
+zero = Mono 0 [('z', 3)]
+expZero = Mono 4 [('x', 0)]
+t = Mono 6 [('y', 0), ('x', 7)]
 
 f = [a]
 h = [a, d]
 k = [b, n]
 l = [d]
 o = [b]
+i = [c, a, t]
+wzero = [a, c, zero, n]
+wExpZero = [a, d, expZero, zero, n]
 v = vars a !! 0
