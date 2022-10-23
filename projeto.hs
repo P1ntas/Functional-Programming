@@ -167,11 +167,7 @@ updateVar (x:xs) b
   |fst(x) == b = [(b, snd(x) - 1)] ++ updateVar xs b
   |otherwise = [x] ++ updateVar xs b
 
-<<<<<<< HEAD
 -- derives the power of the variable (case where power == 1 and variable disappears)
-=======
--- Removes variable if power 0
->>>>>>> 5843c726defb2b4ab17b561f045186b1ed47aba3
 updateVar2 :: [(Char, Int)] -> Char -> [(Char, Int)]
 updateVar2 [] b = []
 updateVar2 (x:xs) b 
