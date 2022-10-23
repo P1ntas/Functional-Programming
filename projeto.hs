@@ -13,7 +13,6 @@ data Mono = Mono {
 } deriving (Eq,Ord, Show)
 type Poly = [Mono]
 
-
 --------------------------Parsing-------------------------------
 --Main parsing function
 parseString :: String -> [[String]] {-, [(Char, Int)])]-}
@@ -64,7 +63,7 @@ rmvExpZero :: Poly -> Poly
 rmvExpZero [] = []
 rmvExpZero (x:xs) = [Mono (coef x) (rmvExpZeroAux (vars x))] ++ rmvExpZero xs
 
---Checks if power is 0
+--Checks if power is 0 
 rmvExpZeroAux :: [(Char, Int)] -> [(Char, Int)]
 rmvExpZeroAux [] = []
 rmvExpZeroAux (x:xs)
@@ -160,7 +159,7 @@ updateVar (x:xs) b
   |fst(x) == b = [(b, snd(x) - 1)] ++ updateVar xs b
   |otherwise = [x] ++ updateVar xs b
 
--- 
+-- derives the power of the variable (case where power == 1 and variable disappears)
 updateVar2 :: [(Char, Int)] -> Char -> [(Char, Int)]
 updateVar2 [] b = []
 updateVar2 (x:xs) b 
@@ -169,14 +168,36 @@ updateVar2 (x:xs) b
  
 ---------------------------------Output----------------------------------
 
---polyToString :: Poly -> String
---toString [] = []
+-- parses polynomials to string
+polyToString :: Poly -> String
+polyToString [] = ""
+polyToString a
+  |head (tail (polyToStringAux a)) == '+' = tail (tail (tail (polyToStringAux a)))
+  |otherwise = tail (polyToStringAux a)
 
-{-
+-- auxiliar function to parse polynomials to string
+polyToStringAux :: Poly -> String
+polyToStringAux [] = ""
+polyToStringAux (x:xs) = monoToString x ++ polyToStringAux xs
+
+-- parses monomials to string
+monoToString :: Mono -> String
+monoToString a = coefToString (coef a) ++ varsToString (vars a)
+
+-- parses coeficient to string
+coefToString :: Int -> String
+coefToString a 
+  |a < 0 = " - " ++ show(-(a))
+  |otherwise = " + " ++ show(a)
+
+-- parses monomials´ variables to string
 varsToString :: [(Char, Int)] -> String
 varsToString [] = []
-varsToString (x:xs) = fst(x) ++ show(snd (x))
--}
+varsToString (x:xs) = charToString (fst (x)) ++ "^" ++ show(snd (x)) ++ varsToString xs
+
+-- parses characters to string
+charToString :: Char -> String
+charToString a = [a]
 
 ---------------------------------Some values-----------------------------
 
@@ -191,7 +212,6 @@ m8 = Mono 8 [('x', 1)]
 m9 = Mono 4 [('x', 0)]
 m10 = Mono 0 [('z', 3)]
 
-
 p1 = [m1]
 p2 = [m1, m4]
 p3 = [m2, m3]
@@ -202,4 +222,5 @@ p7 = [m5, m1, m6]
 p8 = [m7, m8]
 wzero = [m1, m3, m10, m5]
 wExpZero = [m1, m4, m9, m10, m5]
+p9 = [m2, m3, m1, m4, m5]
 v = vars m1 !! 0
