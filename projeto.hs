@@ -160,7 +160,7 @@ updateVar (x:xs) b
   |fst(x) == b = [(b, snd(x) - 1)] ++ updateVar xs b
   |otherwise = [x] ++ updateVar xs b
 
--- 
+-- Removes variable if power 0
 updateVar2 :: [(Char, Int)] -> Char -> [(Char, Int)]
 updateVar2 [] b = []
 updateVar2 (x:xs) b 
