@@ -53,10 +53,16 @@ add1Poly [x] = [x]
 add1Poly (x:xs) = [Mono newCoef (vars x)] ++ add1Poly [y | y <- (x:xs), (vars x /= vars y)]
   where newCoef = sum [coef y | y <- (x:xs), (vars x == vars y)]
 
+
 rmvExpZero :: Poly -> Poly
 rmvExpZero [] = []
-rmvExpZero (x:xs) | snd (vars x !! 0) == 0 = Mono 1 [(' ', 1)] : rmvExpZero xs
-                  |otherwise = x : rmvExpZero xs
+rmvExpZero (x:xs) = [Mono (coef x) (rmvExpZeroAux (vars x))] ++ rmvExpZero xs
+
+rmvExpZeroAux :: [(Char, Int)] -> [(Char, Int)]
+rmvExpZeroAux [] = []
+rmvExpZeroAux (x:xs)
+  |snd(x) == 0 = rmvExpZeroAux xs
+  |otherwise = [x] ++ rmvExpZeroAux xs
 
 rmvZero :: Poly -> Poly
 rmvZero [] = []
@@ -91,7 +97,7 @@ addPolys [] a = a
 addPolys a [] = a
 addPolys a b = normalise (mergePoly a b)
 
-----------------------------Mult Polys-----------------------------
+----------------------------Mult Polys-------------------------------
 
 multPolyAux :: Poly -> Poly -> Poly
 multPolyAux []      qs      = []
@@ -101,7 +107,7 @@ multPolyAux (x:xs) qs = [multMono x y | y <- qs] ++ multPolyAux xs qs
 
 multMono :: Mono -> Mono -> Mono
 multMono a b 
-  |fst (vars a !! 0) == fst (vars b !! 0) = Mono (coef a * coef b) [(fst (vars a !! 0), snd (vars a !! 0) + snd (vars b !! 0))]
+  |fst (vars a !! 0) == fst (vars b !! 0) = Mono (coef a * coef b) [(fst (vars a !! 0), snd (vars a !! 0) + snd (vars b !! 0))] 
   |otherwise = Mono (coef a * coef b) ((vars a) ++ (vars b))
 
 multPoly :: Poly -> Poly -> Poly
@@ -125,30 +131,58 @@ findExp (x:xs) b
 
 
 derivatePoly :: Poly -> Char -> Poly
-derivatePoly [] a = []
-derivatePoly a _ = a
+derivatePoly [] b = []
 derivatePoly (x:xs) b 
-  |(findVar (vars x) b) && ((findExp (vars x) b) > 1) = [Mono ((coef x) * ((findExp (vars x) b) - 1)) (vars x)] ++ derivatePoly xs b
---  |(findVar (vars x) b) && ((findExp (vars x) b) == 1) = 
-  
+  |(findVar (vars x) b) && ((findExp (vars x) b) > 1) = [Mono ((coef x) * (findExp (vars x) b)) (updateVar (vars x) b)] ++ normalise (derivatePoly xs b)
+  |(findVar (vars x) b) && ((findExp (vars x) b) == 1) = [Mono (coef x) (updateVar2 (vars x) b)] ++ normalise (derivatePoly xs b)
+  |otherwise = [x] ++ normalise (derivatePoly xs b)
+
+
+updateVar :: [(Char, Int)] -> Char -> [(Char, Int)]
+updateVar [] b = []
+updateVar (x:xs) b 
+  |fst(x) == b = [(b, snd(x) - 1)] ++ updateVar xs b
+  |otherwise = [x] ++ updateVar xs b
+
+updateVar2 :: [(Char, Int)] -> Char -> [(Char, Int)]
+updateVar2 [] b = []
+updateVar2 (x:xs) b 
+  |fst(x) == b = updateVar2 xs b
+  |otherwise = [x] ++ updateVar2 xs b 
+ 
+---------------------------------Output----------------------------------
+
+--polyToString :: Poly -> String
+--toString [] = []
+
+{-
+varsToString :: [(Char, Int)] -> String
+varsToString [] = []
+varsToString (x:xs) = fst(x) ++ show(snd (x))
+-}
+
 ---------------------------------Some values-----------------------------
 
-a = Mono (-3) [('x', 3), ('z', 2)]
-b = Mono 6 [('y', 2)]
-c = Mono 2 [('z', 5), ('x', 2)]
-d = Mono 9 [('x', 3)]
-n = Mono 5 [('y', 2)]
-zero = Mono 0 [('z', 3)]
-expZero = Mono 4 [('x', 0)]
-t = Mono 6 [('y', 0), ('x', 7)]
+m1 = Mono (-3) [('x', 3), ('z', 2)]
+m2 = Mono 6 [('y', 2)]
+m3 = Mono 2 [('z', 5), ('x', 2)]
+m4 = Mono 9 [('x', 3)]
+m5 = Mono 5 [('y', 2)]
+m6 = Mono 6 [('y', 0), ('x', 7)]
+m7 = Mono 7 [('z', 1)]
+m8 = Mono 8 [('x', 1)]
+m9 = Mono 4 [('x', 0)]
+m10 = Mono 0 [('z', 3)]
 
-f = [a]
-h = [a, d]
-k = [b, n]
-l = [d]
-o = [b]
-j = [n]
-i = [c, a, t]
-wzero = [a, c, zero, n]
-wExpZero = [a, d, expZero, zero, n]
-v = vars a !! 0
+
+p1 = [m1]
+p2 = [m1, m4]
+p3 = [m2, m3]
+p4 = [m4]
+p5 = [m2, m5]
+p6 = [m3]
+p7 = [m5, m1, m6]
+p8 = [m7, m8]
+wzero = [m1, m3, m10, m5]
+wExpZero = [m1, m4, m9, m10, m5]
+v = vars m1 !! 0
