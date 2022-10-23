@@ -4,7 +4,7 @@ import Data.Ord
 import Data.Function (on)
 import Data.List (find)
 import Data.Text.Encoding.Error (ignore)
-
+import Data.Char(isSpace)
 
 -- Data types
 data Mono = Mono { 
@@ -14,10 +14,26 @@ data Mono = Mono {
 type Poly = [Mono]
 
 --------------------------Parsing-------------------------------
---Main parsing function
-parseString :: String -> [[String]] {-, [(Char, Int)])]-}
-parseString [] = []{-("", [])-}
-parseString s = splitCoefficient (splitOneOf "+" (removeSpace (addPlus s)))
+
+--Main parsing function. From string to list of strings: [[coef, var1, exp1, varN, expN...]...]
+parseStringAux :: String -> [[String]] {-, [(Char, Int)])]-}
+parseStringAux [] = []{-("", [])-}
+parseStringAux s = splitCoefficient (splitOneOf "+" (removeSpace (addPlus s)))
+
+-- creates a polynomial based on a list of strings
+parsePolyAux :: [[String]] -> Poly
+parsePolyAux [] = []
+parsePolyAux (x:xs) = [Mono (read (x !! 0) :: Int) (parseVars (tail x))] ++ parsePolyAux xs
+
+-- parses list of strings to monomial variables
+parseVars :: [String] -> [(Char, Int)]
+parseVars [] = []
+parseVars a = [((head a) !! 0, read (head (tail a)))] ++ parseVars (tail (tail a))
+
+-- parses string to polynomial
+parsePoly :: String -> Poly
+parsePoly " " = []
+parsePoly a = parsePolyAux (filter (/= [""]) (parseStringAux a))
 
 -- Adds a plus sign before -, as we split on + sign
 addPlus :: String -> String
@@ -38,14 +54,6 @@ splitCoefficient (x:xs) =  removePower (splitOn "*" x) : splitCoefficient xs
 removePower :: [String] -> [String]
 removePower  [] = []
 removePower (x:xs) = splitOn "^" x ++ removePower xs
-
-{-
-multCoefficient :: String -> String
-multCoefficient "" = []
-multCoefficient (x:xs) 
-  | '^' : x = ignore
-  |otherwise head = x * multCoefficient xs
--}
 
 --------------------------------------------------------------------
 
@@ -80,7 +88,7 @@ rmvZero (x:xs) | coef x == 0 = rmvZero xs
 sortMono :: Ord a => [(a, b)] -> [(a, b)]
 sortMono = sortBy (compare `on` fst)
 
--- Sorts plynomial
+-- Sorts polynomial
 sortPoly :: Poly -> Poly
 sortPoly [] = []
 sortPoly (x:xs) = a ++ sortPoly xs
@@ -130,7 +138,7 @@ multPoly a b = normalise (multPolyAux a b)
 
 ----------------------------------Derivation--------------------------------
 
--- Check if variableis the one to be derivable 
+-- Check if the variable to be derivable exists in the monomial
 findVar :: [(Char, Int)] -> Char -> Bool
 findVar [] a = False
 findVar a ' ' = False
@@ -159,7 +167,11 @@ updateVar (x:xs) b
   |fst(x) == b = [(b, snd(x) - 1)] ++ updateVar xs b
   |otherwise = [x] ++ updateVar xs b
 
+<<<<<<< HEAD
 -- derives the power of the variable (case where power == 1 and variable disappears)
+=======
+-- Removes variable if power 0
+>>>>>>> 5843c726defb2b4ab17b561f045186b1ed47aba3
 updateVar2 :: [(Char, Int)] -> Char -> [(Char, Int)]
 updateVar2 [] b = []
 updateVar2 (x:xs) b 
@@ -220,7 +232,6 @@ p5 = [m2, m5]
 p6 = [m3]
 p7 = [m5, m1, m6]
 p8 = [m7, m8]
-wzero = [m1, m3, m10, m5]
-wExpZero = [m1, m4, m9, m10, m5]
-p9 = [m2, m3, m1, m4, m5]
-v = vars m1 !! 0
+p9 = [m1, m3, m10, m5]
+p10 = [m1, m4, m9, m10, m5]
+p11 = [m2, m3, m1, m4, m5]
